@@ -389,11 +389,16 @@
         runLeft: new Image(),
         idleRight: new Image(),
         idleLeft: new Image(),
+        lava: new Image(),
       };
       sprites.runRight.src = "run_right.png";
       sprites.runLeft.src = "run_left.png";
       sprites.idleRight.src = "idle_right.png";
       sprites.idleLeft.src = "idle_left.png";
+      sprites.lava.src = "lava.png";
+
+      sprites.lava.onload = () => console.log("Lava loaded");
+      sprites.lava.onerror = () => console.error("Lava NOT FOUND");
 
       /* ================= MAP ================= */
       class GameMap {
@@ -409,11 +414,33 @@
           if (r < 0 || r >= MAP_ROWS || c < 0 || c >= MAP_COLS) return true;
           return this.data[r][c] === 1;
         }
-        draw(ctx, tile) {
+        draw(ctx, tile, lavaFrame) {
           for (let r = 0; r < MAP_ROWS; r++) {
             for (let c = 0; c < MAP_COLS; c++) {
-              ctx.fillStyle = this.data[r][c] ? "#555" : "#2a7";
+              // Background
+              ctx.fillStyle = "#2a7";
               ctx.fillRect(c * tile, r * tile, tile, tile);
+
+              // Walls (εκτός τελευταίας σειράς)
+              if (r < MAP_ROWS - 1 && this.data[r][c] === 1) {
+                ctx.fillStyle = "#555";
+                ctx.fillRect(c * tile, r * tile, tile, tile);
+              }
+
+              // Lava
+              if (r === MAP_ROWS - 1) {
+                ctx.drawImage(
+                  sprites.lava,
+                  lavaFrame * 16,
+                  0,
+                  16,
+                  16,
+                  c * tile,
+                  r * tile,
+                  tile,
+                  tile,
+                );
+              }
             }
           }
         }
@@ -766,8 +793,9 @@
           temp.height = canvas.height;
           const tctx = temp.getContext("2d");
           tctx.save();
+          this.map.draw(tctx, tile, game.lavaFrame);
           tctx.translate(-cameraX, 0);
-          this.map.draw(tctx, tile);
+          this.map.draw(tctx, tile, game.lavaFrame);
           this.coins.draw(tctx, tile);
           this.door.draw(tctx, tile);
           tctx.restore();
@@ -905,6 +933,8 @@
           this.last = 0;
           this.isPaused = false;
           this.cameraX = 0;
+          this.lavaFrame = 0;
+          this.lavaTimer = 0;
 
           // Ξεκινάμε από το Level 1
           this.currentLevelIndex = 1;
@@ -956,7 +986,10 @@
           this.door.check(this.player);
 
           // ΑΥΤΟΜΑΤΟ RESTART ΑΝ ΠΕΣΕΙ ΣΤΟ ΚΕΝΟ:
-          if (this.player.y > MAP_ROWS) {
+          const deathY = MAP_ROWS - 1.1;
+
+          // Αν βρίσκεται χαμηλά και δεν είναι στη Safe Zone
+          if (this.player.y > deathY && this.player.x > 7) {
             this.loadLevel(this.currentLevelIndex);
           }
 
@@ -969,16 +1002,26 @@
             0,
             Math.min(targetCamX, MAP_COLS * tile - this.canvas.canvas.width),
           );
+
+          this.lavaTimer += dt;
+
+          if (this.lavaTimer > 0.25) {
+            this.lavaTimer = 0;
+            this.lavaFrame = (this.lavaFrame + 1) % 2;
+          }
         }
         draw() {
           const ctx = this.canvas.ctx;
           const tile = this.canvas.tile;
+
           ctx.clearRect(
             0,
             0,
             this.canvas.canvas.width,
             this.canvas.canvas.height,
           );
+
+          // Σκοτάδι + κύκλος φωτός
           this.light.draw(
             ctx,
             this.canvas.canvas,
@@ -986,16 +1029,20 @@
             this.player,
             this.cameraX,
           );
+
+          // Παίκτης πάνω από το φως
           ctx.save();
           ctx.translate(-this.cameraX, 0);
           this.player.draw(ctx, tile);
           ctx.restore();
+
+          // Puzzle πάνω απ' όλα
           this.puzzle.draw();
         }
       }
 
       /* ================= START ================= */
-      new Game();
+      let game = new Game();
     </script>
   </body>
 </html>
