@@ -1,18 +1,18 @@
 export class Enemy {
   constructor(x, y) {
-    this.x = x; // Θέση X σε blocks (π.χ. 5.5)
-    this.y = y; // Θέση Y σε blocks
-    this.width = 0.8; // Μέγεθος εχθρού (λίγο μικρότερο από 1 block)
+    // Στρογγυλοποιούμε το Y ώστε να πατάει ακριβώς στην αρχή του tile
+    this.x = x;
+    this.y = Math.floor(y) + 0.2; // Το 0.2 συμπληρώνει το ύψος (0.8) για να ακουμπάει το κάτω block
+    this.width = 0.8;
     this.height = 0.8;
-    this.speed = 0.05; // Ταχύτητα κίνησης
-    this.direction = 1; // 1 = Δεξιά, -1 = Αριστερά
+    this.speed = 0.05;
+    this.direction = 1;
   }
 
   update(map) {
-    // Δικλείδα ασφαλείας για το Webpack/Ασυγχρονία
     if (!map || !map[0]) return;
 
-    // 1. Υπολογισμός της επόμενης υποψήφιας θέσης X
+    // 1. Υπολογισμός επόμενης θέσης X
     let nextX = this.x + this.speed * this.direction;
 
     // Όρια οθόνης
@@ -21,42 +21,43 @@ export class Enemy {
       return;
     }
 
-    // 2. Έλεγχος για τοίχους ΜΠΡΟΣΤΑ του
+    // 2. Έλεγχος για τοίχους (μπροστά του)
     let checkCol =
       this.direction === 1 ? Math.floor(nextX + this.width) : Math.floor(nextX);
-    let checkRow = Math.floor(this.y + this.height / 2); // Ελέγχουμε στο κέντρο του σώματός του
+    let checkRow = Math.floor(this.y);
 
     if (map[checkRow] !== undefined && map[checkRow][checkCol] === 1) {
-      this.direction *= -1; // Τοίχος! Γύρνα πίσω
+      this.direction *= -1;
       return;
     }
 
-    // 3. Έλεγχος για την άκρη της πλατφόρμας (Να μην πέσει στο κενό)
-    // Κοιτάζουμε ακριβώς 0.2 blocks κάτω από τα πόδια του
-    let groundRow = Math.floor(this.y + this.height + 0.2);
+    // 3. Έλεγχος για την άκρη της πλατφόρμας
+    // Κοιτάζουμε τη σειρά που βρίσκεται ακριβώς κάτω από τον εχθρό (checkRow + 1)
+    let groundRow = checkRow + 1;
+    // Ελέγχουμε το block μπροστά, ανάλογα με την κατεύθυνση
     let groundCol =
-      this.direction === 1 ? Math.floor(nextX + this.width) : Math.floor(nextX);
+      this.direction === 1
+        ? Math.floor(nextX + this.width - 0.1)
+        : Math.floor(nextX + 0.1);
 
-    // Αν κάτω από τα πόδια του έχει κενό (0) ή λάβα (MAP_ROWS - 1), άλλαξε κατεύθυνση
     if (
       map[groundRow] === undefined ||
       map[groundRow][groundCol] === undefined ||
       map[groundRow][groundCol] === 0
     ) {
-      this.direction *= -1; // Άκρη πλατφόρμας! Γύρνα πίσω
+      this.direction *= -1; // Δεν έχει πάτωμα, γύρνα πίσω!
       return;
     }
 
-    // Αν όλα είναι καθαρά, προχώρα!
+    // Αν όλα είναι εντάξει, προχωράει
     this.x = nextX;
   }
 
   draw(ctx, tileSize, cameraX) {
-    // Υπολογισμός θέσης στην οθόνη με βάση την κάμερα
+    // Σχεδίαση χωρίς "αλχημείες" στο Y, αφού η θέση είναι πλέον σωστή
     const screenX = (this.x - cameraX) * tileSize;
     const screenY = this.y * tileSize;
 
-    // Σχεδίαση εχθρού (κόκκινο τετράγωνο ή sprite αν έχεις)
     ctx.fillStyle = "red";
     ctx.fillRect(
       screenX,
@@ -66,9 +67,7 @@ export class Enemy {
     );
   }
 
-  // Απλό Box Collision για να δούμε αν χτύπησε τον παίκτη
   checkCollision(player) {
-    // Στενεύουμε το οπτικό hitbox του παίκτη για να πιάνει μόνο το σώμα
     const playerVisualX = player.x - 0.5;
     const playerVisualW = 1.3;
 
