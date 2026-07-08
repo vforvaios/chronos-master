@@ -6,6 +6,7 @@ import { Door } from "./Door.js";
 import { CanvasManager } from "./CanvasManager.js";
 import { PuzzleSystem } from "./PuzzleSystem.js";
 import { LightSystem } from "./LightSystem.js";
+import { Enemy } from "./Enemy.js";
 import { generateDynamicLevel } from "./LevelGenerator.js";
 import { MAP_ROWS, MAP_COLS } from "./Config.js";
 
@@ -48,6 +49,10 @@ export class Game {
     this.map.load(lvl.map);
     this.player.spawn(lvl.playerStart.x, lvl.playerStart.y);
     this.coins.load(lvl.coins);
+
+    // Αρχικοποίηση εχθρών
+    this.enemies = (lvl.enemies || []).map((e) => new Enemy(e.x, e.y));
+
     this.door.load(lvl.door.x, lvl.door.y);
     this.puzzle.load(lvl.puzzle);
     this.isPaused = false;
@@ -65,11 +70,24 @@ export class Game {
     this.draw();
     requestAnimationFrame((e) => this.loop(e));
   }
+
   update(dt) {
     if (this.isPaused) return;
     this.player.updatePhysics(this.input.dir(), this.map, dt);
     this.coins.check(this.player);
     this.door.check(this.player);
+
+    // === ΔΙΟΡΘΩΣΗ ΕΔΩ: Ενημέρωση κίνησης εχθρών με το .data ===
+    if (this.enemies) {
+      this.enemies.forEach((enemy) => {
+        enemy.update(this.map.data); // Σωστό property!
+
+        // Έλεγχος σύγκρουσης με τον παίκτη
+        if (enemy.checkCollision(this.player)) {
+          this.loadLevel(this.currentLevelIndex);
+        }
+      });
+    }
 
     // ΑΥΤΟΜΑΤΟ RESTART ΑΝ ΠΕΣΕΙ ΣΤΟ ΚΕΝΟ:
     const deathY = MAP_ROWS - 1.1;
@@ -95,22 +113,47 @@ export class Game {
       this.lavaFrame = (this.lavaFrame + 1) % 2;
     }
   }
+
   draw() {
     const ctx = this.canvas.ctx;
     const tile = this.canvas.tile;
 
     ctx.clearRect(0, 0, this.canvas.canvas.width, this.canvas.canvas.height);
 
-    // Σκοτάδι + κύκλος φωτός
-    this.light.draw(ctx, this.canvas.canvas, tile, this.player, this.cameraX);
-
-    // Παίκτης πάνω από το φως
+    // LAYER 1: Χάρτης (Πίσω από το σκοτάδι)
     ctx.save();
     ctx.translate(-this.cameraX, 0);
-    this.player.draw(ctx, tile);
+    this.map.draw(ctx, tile, this.lavaFrame);
     ctx.restore();
 
-    // Puzzle πάνω απ' όλα
+    // LAYER 2: Σκοτάδι & Φως
+    this.light.draw(ctx, this.canvas.canvas, tile, this.player, this.cameraX);
+
+    // LAYER 3: Χαρακτήρες (Πάνω από το σκοτάδι, αλλά με έλεγχο απόστασης!)
+    ctx.save();
+    ctx.translate(-this.cameraX, 0);
+
+    // Σχεδίαση Παίκτη (Πάντα ορατός)
+    this.player.draw(ctx, tile);
+
+    // Σχεδίαση Εχθρών ΜΟΝΟ αν είναι κοντά στον παίκτη (μέσα στο φως)
+    if (this.enemies) {
+      this.enemies.forEach((enemy) => {
+        // Υπολογισμός απόστασης (σε blocks) μεταξύ παίκτη και εχθρού
+        const dx = enemy.x - this.player.x;
+        const dy = enemy.y - this.player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Αν η απόσταση είναι μικρότερη από 4.5 blocks (όσο είναι περίπου το φως σου), σχεδίασέ τον
+        if (distance < 4.5) {
+          enemy.draw(ctx, tile, 0);
+        }
+      });
+    }
+
+    ctx.restore();
+
+    // LAYER 4: UI / Παζλ
     this.puzzle.draw();
   }
 }

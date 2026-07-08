@@ -108,11 +108,26 @@ export function generateDynamicLevel(levelNumber) {
     correct: isCorrectA ? "A" : "B",
   };
 
+  // 4.5 Αυτόματη δημιουργία εχθρών
+  let enemies = [];
+  for (let r = 2; r < MAP_ROWS - 1; r++) {
+    for (let c = 2; c < MAP_COLS - 2; c++) {
+      // Αν υπάρχει πλατφόρμα, και από πάνω της έχει κενό, βάλε εχθρό με μια μικρή πιθανότητα
+      if (map[r][c] === 1 && map[r - 1][c] === 0) {
+        // Μην βάζεις εχθρό ακριβώς στην εκκίνηση του παίκτη (c < 6)
+        if (c > 7 && Math.random() < 0.08) {
+          enemies.push({ x: c, y: r - 1 }); // r - 1 για να πατάει ΠΑΝΩ στην πλατφόρμα
+        }
+      }
+    }
+  }
+
   return {
     map: map,
     playerStart: { x: 2.5, y: MAP_ROWS - 3.5 },
     door: { x: doorX, y: doorY },
     coins: coins,
     puzzle: puzzle,
+    enemies: enemies,
   };
 }
