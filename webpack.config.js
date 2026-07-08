@@ -54,6 +54,11 @@ module.exports = {
       {
         test: /\.html$/i,
         loader: "html-loader",
+        options: {
+          // Κλείνει εντελώς την αυτόματη επεξεργασία των links/εικόνων μέσα στο HTML.
+          // Έτσι, ό,τι γράφεις στο index.html θα περάσει στο dist ΑΥΤΟΥΣΙΟ!
+          sources: false,
+        },
       },
     ],
   },
