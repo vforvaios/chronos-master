@@ -37,6 +37,7 @@ module.exports = {
         { from: "manifest.json", to: "" },
         { from: "icon-192.png", to: "" }, // Τώρα θα το βρει 100%!
         { from: "icon-512.png", to: "" }, // Τώρα θα το βρει 100%!
+        { from: "lava_sound.mp3", to: "" },
       ],
     }),
   ],

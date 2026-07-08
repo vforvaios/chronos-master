@@ -23,6 +23,28 @@ export class Game {
     this.lavaFrame = 0;
     this.lavaTimer = 0;
 
+    // === ΠΡΟΣΘΕΣΕ ΑΥΤΕΣ ΤΙΣ ΓΡΑΜΜΕΣ ΓΙΑ ΤΟΝ ΗΧΟ ===
+    this.lavaAudio = new Audio("./lava_sound.mp3"); // Ή το path που έχεις το αρχείο
+    this.lavaAudio.loop = true; // Να παίζει συνεχώς
+    this.lavaAudio.volume = 0.4; // Ένταση από 0.0 έως 1.0 (προαιρετικό)
+
+    // Ξεκινάει τον ήχο μόλις ο χρήστης κάνει κλικ ή πατήσει ένα κουμπί
+    const startAudio = () => {
+      this.lavaAudio
+        .play()
+        .catch((err) =>
+          console.log("Audio autoplay blocked or waiting for interaction"),
+        );
+      // Αφαιρούμε τους listeners για να μην ξανατρέξουν άσκοπα
+      window.removeEventListener("click", startAudio);
+      window.removeEventListener("keydown", startAudio);
+      window.removeEventListener("touchstart", startAudio);
+    };
+
+    window.addEventListener("click", startAudio);
+    window.addEventListener("keydown", startAudio);
+    window.addEventListener("touchstart", startAudio); // Για κινητά/touch συσκευές
+
     // Ξεκινάμε από το Level 1
     this.currentLevelIndex = 1;
 

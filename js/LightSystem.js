@@ -9,7 +9,7 @@ export class LightSystem {
   draw(ctx, canvas, tile, player, cameraX) {
     const px = (player.x + player.w / 2) * tile;
     const py = (player.y + player.h / 2) * tile;
-    const radius = tile * 6;
+    const radius = tile * 4;
     const temp = document.createElement("canvas");
     temp.width = canvas.width;
     temp.height = canvas.height;
@@ -31,7 +31,7 @@ export class LightSystem {
     tctx.beginPath();
     tctx.arc(screenPx, py, radius, 0, Math.PI * 2);
     tctx.fill();
-    ctx.fillStyle = "rgba(0,0,0,0.83)";
+    ctx.fillStyle = "rgba(0,0,0,0.89)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(temp, 0, 0);
   }
