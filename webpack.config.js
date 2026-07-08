@@ -3,6 +3,7 @@ require("dotenv").config();
 const webpack = require("webpack");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: "development",
@@ -30,6 +31,14 @@ module.exports = {
       "process.env.API_URL": JSON.stringify(process.env.API_URL),
       "process.env.APP_NAME": JSON.stringify(process.env.APP_NAME),
     }),
+    new CopyPlugin({
+      patterns: [
+        { from: "service-worker.js", to: "" },
+        { from: "manifest.json", to: "" },
+        { from: "icon-192.png", to: "" }, // Τώρα θα το βρει 100%!
+        { from: "icon-512.png", to: "" }, // Τώρα θα το βρει 100%!
+      ],
+    }),
   ],
   module: {
     rules: [
@@ -40,13 +49,6 @@ module.exports = {
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: "asset/resource", // Λέει στο Webpack 5 να αντιμετωπίζει τις εικόνες ως στατικά αρχεία
-      },
-      {
-        test: /manifest\.json$/,
-        type: "asset/resource",
-        generator: {
-          filename: "[name][ext]", // Κρατάει το όνομα "manifest.json" χωρίς hash στο dist
-        },
       },
       {
         test: /\.html$/i,
