@@ -41,6 +41,17 @@ module.exports = {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: "asset/resource", // Λέει στο Webpack 5 να αντιμετωπίζει τις εικόνες ως στατικά αρχεία
       },
+      {
+        test: /manifest\.json$/,
+        type: "asset/resource",
+        generator: {
+          filename: "[name][ext]", // Κρατάει το όνομα "manifest.json" χωρίς hash στο dist
+        },
+      },
+      {
+        test: /\.html$/i,
+        loader: "html-loader",
+      },
     ],
   },
 };
