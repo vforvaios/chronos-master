@@ -1,3 +1,4 @@
+import { MAP_ROWS, MAP_COLS, sprites } from "./Config.js";
 /* ================= MAP ================= */
 export class GameMap {
   constructor() {

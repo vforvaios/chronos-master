@@ -1,3 +1,4 @@
+import { sprites } from "./Config.js";
 /* ================= PLAYER ================= */
 export class Player {
   constructor() {

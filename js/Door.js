@@ -1,5 +1,5 @@
 /* ================= DOOR ================= */
-class Door {
+export class Door {
   constructor(onTrigger) {
     this.x = 0;
     this.y = 0;

@@ -6,6 +6,8 @@ import { Door } from "./Door.js";
 import { CanvasManager } from "./CanvasManager.js";
 import { PuzzleSystem } from "./PuzzleSystem.js";
 import { LightSystem } from "./LightSystem.js";
+import { generateDynamicLevel } from "./LevelGenerator.js";
+import { MAP_ROWS, MAP_COLS } from "./Config.js";
 
 export class Game {
   constructor() {

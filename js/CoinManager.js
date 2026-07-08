@@ -1,5 +1,5 @@
 /* ================= COINS ================= */
-class CoinManager {
+export class CoinManager {
   constructor() {
     this.coins = [];
   }
