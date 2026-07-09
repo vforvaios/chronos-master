@@ -1,6 +1,7 @@
 import { MAP_ROWS, MAP_COLS } from "./Config.js";
 
 export function generateDynamicLevel(levelNumber) {
+  let enemies = [];
   // 1. Δημιουργία άδειου χάρτη με περιμετρικούς τοίχους
   let map = [];
   for (let r = 0; r < MAP_ROWS; r++) {
@@ -31,7 +32,13 @@ export function generateDynamicLevel(levelNumber) {
     let w = Math.floor(Math.random() * 2) + 2; // πλάτος 2-3
     let hJump = Math.floor(Math.random() * 2); // 0 ή 1 για μικρή ποικιλία
     for (let i = 0; i < w; i++) {
-      if (curX + i < MAP_COLS - 5) map[floor1 + hJump][curX + i] = 1;
+      if (curX + i < MAP_COLS - 5) {
+        map[floor1 + hJump][curX + i] = 1;
+        // ΕΔΩ ΜΠΑΙΝΕΙ Ο ΕΧΘΡΟΣ: Αν δεν είναι στην αρχή, βάλε εχθρό ακριβώς 1 block πάνω από το tile!
+        if (curX + i > 7 && Math.random() < 0.15) {
+          enemies.push({ x: curX + i, y: floor1 + hJump - 1 });
+        }
+      }
     }
     curX += w + Math.floor(Math.random() * 2) + 1; // κενό 1-2 blocks
   }
@@ -49,7 +56,14 @@ export function generateDynamicLevel(levelNumber) {
     let w = Math.floor(Math.random() * 2) + 2;
     let hJump = Math.floor(Math.random() * 2);
     for (let i = 0; i < w; i++) {
-      if (curX - i > 4) map[floor2 + hJump][curX - i] = 1;
+      if (curX - i > 4) {
+        map[floor2 + hJump][curX - i] = 1;
+
+        // ΕΔΩ ΜΠΑΙΝΕΙ Ο ΕΧΘΡΟΣ:
+        if (Math.random() < 0.15) {
+          enemies.push({ x: curX - i, y: floor2 + hJump - 1 });
+        }
+      }
     }
     curX -= w + Math.floor(Math.random() * 2) + 1;
   }
@@ -68,7 +82,14 @@ export function generateDynamicLevel(levelNumber) {
     let w = Math.floor(Math.random() * 2) + 3; // πλάτος 3-4 blocks
     let hJump = Math.floor(Math.random() * 2);
     for (let i = 0; i < w; i++) {
-      if (curX + i < MAP_COLS - 2) map[floor3 + hJump][curX + i] = 1;
+      if (curX + i < MAP_COLS - 2) {
+        map[floor3 + hJump][curX + i] = 1;
+
+        // ΕΔΩ ΜΠΑΙΝΕΙ Ο ΕΧΘΡΟΣ (Μακριά από την πόρτα):
+        if (curX + i < lastX - 2 && Math.random() < 0.15) {
+          enemies.push({ x: curX + i, y: floor3 + hJump - 1 });
+        }
+      }
     }
     lastX = curX + Math.floor(w / 2);
     curX += w + Math.floor(Math.random() * 2) + 1;
@@ -107,20 +128,6 @@ export function generateDynamicLevel(levelNumber) {
     optB: isCorrectA ? String(wrongAns) : String(correctAns),
     correct: isCorrectA ? "A" : "B",
   };
-
-  // 4.5 Αυτόματη δημιουργία εχθρών
-  let enemies = [];
-  for (let r = 2; r < MAP_ROWS - 1; r++) {
-    for (let c = 2; c < MAP_COLS - 2; c++) {
-      // Αν υπάρχει πλατφόρμα, και από πάνω της έχει κενό, βάλε εχθρό με μια μικρή πιθανότητα
-      if (map[r][c] === 1 && map[r - 1][c] === 0) {
-        // Μην βάζεις εχθρό ακριβώς στην εκκίνηση του παίκτη (c < 6)
-        if (c > 7 && Math.random() < 0.08) {
-          enemies.push({ x: c, y: r - 1 }); // r - 1 για να πατάει ΠΑΝΩ στην πλατφόρμα
-        }
-      }
-    }
-  }
 
   return {
     map: map,
