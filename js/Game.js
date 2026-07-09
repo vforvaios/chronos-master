@@ -23,27 +23,47 @@ export class Game {
     this.lavaFrame = 0;
     this.lavaTimer = 0;
 
-    // === ΠΡΟΣΘΕΣΕ ΑΥΤΕΣ ΤΙΣ ΓΡΑΜΜΕΣ ΓΙΑ ΤΟΝ ΗΧΟ ===
-    this.lavaAudio = new Audio("./lava_sound.mp3"); // Ή το path που έχεις το αρχείο
-    this.lavaAudio.loop = true; // Να παίζει συνεχώς
-    this.lavaAudio.volume = 0.4; // Ένταση από 0.0 έως 1.0 (προαιρετικό)
+    // 1. Απλά ορίζουμε τη μεταβλητή, ΔΕΝ φορτώνουμε το αρχείο ακόμα
+    this.lavaAudio = null;
 
-    // Ξεκινάει τον ήχο μόλις ο χρήστης κάνει κλικ ή πατήσει ένα κουμπί
-    const startAudio = () => {
+    // 2. Η συνάρτηση που θα «ξεκλειδώσει» τον ήχο στο πρώτο άγγιγμα
+    const unlockAudio = () => {
+      // Δημιουργούμε το Audio object ΜΕΣΑ στο touch event για να είναι 100% έγκυρο για το κινητό
+      if (!this.lavaAudio) {
+        this.lavaAudio = new Audio("./lava_sound.mp3");
+        this.lavaAudio.loop = true;
+        this.lavaAudio.volume = 0.4;
+      }
+
+      // Δοκιμάζουμε να το παίξουμε
       this.lavaAudio
         .play()
-        .catch((err) =>
-          console.log("Audio autoplay blocked or waiting for interaction"),
-        );
-      // Αφαιρούμε τους listeners για να μην ξανατρέξουν άσκοπα
-      window.removeEventListener("click", startAudio);
-      window.removeEventListener("keydown", startAudio);
-      window.removeEventListener("touchstart", startAudio);
+        .then(() => {
+          console.log("Audio unlocked and playing successfully!");
+          // Αφαιρούμε ΟΛΟΥΣ τους listeners αφού ο ήχος ξεκίνησε
+          removeListeners();
+        })
+        .catch((err) => {
+          console.log(
+            "Αποτυχία αναπαραγωγής, ξαναπροσπάθεια στο επόμενο touch:",
+            err,
+          );
+        });
     };
 
-    window.addEventListener("click", startAudio);
-    window.addEventListener("keydown", startAudio);
-    window.addEventListener("touchstart", startAudio); // Για κινητά/touch συσκευές
+    // Βοηθητική συνάρτηση για καθαρισμό των listeners
+    const removeListeners = () => {
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("touchend", unlockAudio);
+    };
+
+    // 3. Ακούμε όλα τα πιθανά events (το touchend και touchstart κάνουν τη διαφορά στα κινητά)
+    window.addEventListener("click", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+    window.addEventListener("touchstart", unlockAudio);
+    window.addEventListener("touchend", unlockAudio);
 
     // Ξεκινάμε από το Level 1
     this.currentLevelIndex = 1;

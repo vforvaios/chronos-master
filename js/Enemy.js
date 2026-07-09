@@ -5,7 +5,7 @@ export class Enemy {
     this.y = Math.floor(y) + 0.2; // Το 0.2 συμπληρώνει το ύψος (0.8) για να ακουμπάει το κάτω block
     this.width = 0.8;
     this.height = 0.8;
-    this.speed = 0.05;
+    this.speed = 0.02;
     this.direction = 1;
   }
 
