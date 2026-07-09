@@ -1,4 +1,5 @@
 import { Player } from "./Player.js";
+import { Particle } from "./Particle.js";
 import { GameMap } from "./GameMap.js";
 import { Input } from "./Input.js";
 import { CoinManager } from "./CoinManager.js";
@@ -22,6 +23,7 @@ export class Game {
     this.cameraX = 0;
     this.lavaFrame = 0;
     this.lavaTimer = 0;
+    this.particles = [];
 
     // 1. Απλά ορίζουμε τη μεταβλητή, ΔΕΝ φορτώνουμε το αρχείο ακόμα
     this.lavaAudio = null;
@@ -119,15 +121,49 @@ export class Game {
     this.coins.check(this.player);
     this.door.check(this.player);
 
+    // Ανανέωση σωματιδίων
+    this.particles = this.particles.filter((p) => {
+      p.update(dt);
+      return p.life > 0; // Κρατάμε μόνο όσα ζουν ακόμα
+    });
+
     // === ΔΙΟΡΘΩΣΗ ΕΔΩ: Ενημέρωση κίνησης εχθρών με το .data ===
     if (this.enemies) {
-      this.enemies.forEach((enemy) => {
-        enemy.update(this.map.data); // Σωστό property!
+      // Χρησιμοποιούμε φίλτρο για να κρατάμε μόνο τους ζωντανούς εχθρούς
+      this.enemies = this.enemies.filter((enemy) => {
+        enemy.update(this.map.data);
 
-        // Έλεγχος σύγκρουσης με τον παίκτη
+        // Έλεγχος αν υπάρχει σύγκρουση
         if (enemy.checkCollision(this.player)) {
-          this.loadLevel(this.currentLevelIndex);
+          // ΚΟΛΠΟ MARIO: Αν ο παίκτης πέφτει προς τα κάτω (vy > 0)
+          // ΚΑΙ η βάση του παίκτη είναι κοντά στο κεφάλι του εχθρού
+          const isStomping =
+            this.player.vy > 0 &&
+            this.player.y + this.player.h <= enemy.y + 0.3;
+
+          if (isStomping) {
+            // Ο παίκτης αναπηδάει ελαφρώς αφού πάτησε τον εχθρό
+            this.player.vy = -6;
+
+            // === ΔΗΜΙΟΥΡΓΙΑ ΚΟΜΜΑΤΙΩΝ ===
+            // Δημιουργούμε 15 κομματάκια στη θέση του εχθρού
+            for (let i = 0; i < 15; i++) {
+              this.particles.push(
+                new Particle(
+                  enemy.x + enemy.width / 2,
+                  enemy.y + enemy.height / 2,
+                ),
+              );
+            }
+
+            // Επιστρέφουμε false για να αφαιρεθεί αυτός ο εχθρός από τον πίνακα (πεθαίνει!)
+            return false;
+          } else {
+            // Αν τον ακούμπησε από το πλάι ή από κάτω, ο παίκτης χάνει
+            this.loadLevel(this.currentLevelIndex);
+          }
         }
+        return true; // Ο εχθρός παραμένει ζωντανός
       });
     }
 
@@ -192,6 +228,8 @@ export class Game {
         }
       });
     }
+
+    this.particles.forEach((p) => p.draw(ctx, tile, 0));
 
     ctx.restore();
 

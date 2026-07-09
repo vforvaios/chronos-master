@@ -21,6 +21,3 @@ sprites.runLeft.src = runLeftImg;
 sprites.idleRight.src = idleRightImg;
 sprites.idleLeft.src = idleLeftImg;
 sprites.lava.src = lavaImg;
-
-sprites.lava.onload = () => console.log("Lava loaded");
-sprites.lava.onerror = () => console.error("Lava NOT FOUND");
