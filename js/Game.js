@@ -85,7 +85,7 @@ export class Game {
       this.puzzle.activate();
     });
 
-    this.light = new LightSystem(this.map, this.coins, this.door);
+    this.light = new LightSystem(this.map, this.coins, this.door, this);
 
     this.puzzle = new PuzzleSystem(this.canvas, () => {
       this.nextLevel();

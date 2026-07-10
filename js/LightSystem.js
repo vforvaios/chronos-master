@@ -1,10 +1,11 @@
-import { game } from "../main.js";
+// import { game } from "../main.js";
 
 export class LightSystem {
-  constructor(map, coinManager, door) {
+  constructor(map, coinManager, door, gameReference) {
     this.map = map;
     this.coins = coinManager;
     this.door = door;
+    this.game = gameReference;
   }
   draw(ctx, canvas, tile, player, cameraX) {
     const px = (player.x + player.w / 2) * tile;
@@ -15,9 +16,9 @@ export class LightSystem {
     temp.height = canvas.height;
     const tctx = temp.getContext("2d");
     tctx.save();
-    this.map.draw(tctx, tile, game.lavaFrame);
+    this.map.draw(tctx, tile, this.game.lavaFrame);
     tctx.translate(-cameraX, 0);
-    this.map.draw(tctx, tile, game.lavaFrame);
+    this.map.draw(tctx, tile, this.game.lavaFrame);
     this.coins.draw(tctx, tile);
     this.door.draw(tctx, tile);
     tctx.restore();
