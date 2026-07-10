@@ -37,12 +37,20 @@ module.exports = {
         { from: "manifest.json", to: "" },
         { from: "icon-192.png", to: "" }, // Τώρα θα το βρει 100%!
         { from: "icon-512.png", to: "" }, // Τώρα θα το βρει 100%!
-        { from: "lava_sound.mp3", to: "" },
+        // { from: "lava_sound.mp3", to: "" },
+        // { from: "bgmusic.mp3", to: "" },
       ],
     }),
   ],
   module: {
     rules: [
+      {
+        test: /\.(mp3|wav|ogg)$/i,
+        type: "asset/resource",
+        generator: {
+          filename: "[name][ext]", // Κρατάει το αρχικό όνομα (π.χ. bgmusic.mp3) χύμα στο dist
+        },
+      },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],

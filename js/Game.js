@@ -11,6 +11,9 @@ import { Enemy } from "./Enemy.js";
 import { generateDynamicLevel } from "./LevelGenerator.js";
 import { MAP_ROWS, MAP_COLS } from "./Config.js";
 
+import bgMusicUrl from "../bgmusic.mp3"; // Προσάρμοσε τη διαδρομή αν είναι σε άλλον φάκελο (π.χ. ../bgmusic.mp3)
+import lavaSoundUrl from "../lava_sound.mp3";
+
 export class Game {
   constructor() {
     this.canvas = new CanvasManager(document.getElementById("game"));
@@ -27,30 +30,37 @@ export class Game {
 
     // 1. Απλά ορίζουμε τη μεταβλητή, ΔΕΝ φορτώνουμε το αρχείο ακόμα
     this.lavaAudio = null;
+    this.bgAudio = null;
 
     // 2. Η συνάρτηση που θα «ξεκλειδώσει» τον ήχο στο πρώτο άγγιγμα
     const unlockAudio = () => {
-      // Δημιουργούμε το Audio object ΜΕΣΑ στο touch event για να είναι 100% έγκυρο για το κινητό
+      // Δημιουργούμε τα Audio objects χρησιμοποιώντας τα σωστά Webpack imports
       if (!this.lavaAudio) {
-        this.lavaAudio = new Audio("./lava_sound.mp3");
+        this.lavaAudio = new Audio(lavaSoundUrl);
         this.lavaAudio.loop = true;
         this.lavaAudio.volume = 0.4;
       }
 
-      // Δοκιμάζουμε να το παίξουμε
+      if (!this.bgAudio) {
+        this.bgAudio = new Audio(bgMusicUrl);
+        this.bgAudio.loop = true;
+        this.bgAudio.volume = 0.4;
+      }
+
+      // Ξεκινάμε την αναπαραγωγή και των δύο
       this.lavaAudio
         .play()
+        .then(() => console.log("Lava sound started successfully!"))
+        .catch((err) => console.log("Lava audio failed:", err));
+
+      this.bgAudio
+        .play()
         .then(() => {
-          console.log("Audio unlocked and playing successfully!");
-          // Αφαιρούμε ΟΛΟΥΣ τους listeners αφού ο ήχος ξεκίνησε
+          console.log("Background music started successfully!");
+          // Αφαιρούμε τους listeners μόνο όταν ξεκινήσει επιτυχώς η μουσική
           removeListeners();
         })
-        .catch((err) => {
-          console.log(
-            "Αποτυχία αναπαραγωγής, ξαναπροσπάθεια στο επόμενο touch:",
-            err,
-          );
-        });
+        .catch((err) => console.log("Background music failed:", err));
     };
 
     // Βοηθητική συνάρτηση για καθαρισμό των listeners
