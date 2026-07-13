@@ -8,12 +8,45 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnPlatformer = document.getElementById("btn-platformer");
   const btnDoodle = document.getElementById("btn-doodle");
   const touchControls = document.getElementById("touch-controls");
-
-  // ΤΟ ΝΕΟ ΚΟΥΜΠΙ
   const btnBack = document.getElementById("btn-back-to-menu");
 
   const canvasManager = new CanvasManager(gameCanvas);
   let activeGame = null;
+
+  // Ασφαλής συνάρτηση για αλλαγή προσανατολισμού (Συμβατή και με Android 9)
+  const changeOrientation = (mode) => {
+    try {
+      if (screen.orientation && typeof screen.orientation.lock === "function") {
+        if (mode === "landscape") {
+          screen.orientation
+            .lock("landscape")
+            .then(() => console.log("Orientation locked to landscape"))
+            .catch((err) => console.warn("Orientation lock rejected:", err));
+        } else if (mode === "portrait") {
+          screen.orientation
+            .lock("portrait")
+            .then(() => console.log("Orientation locked to portrait"))
+            .catch((err) => console.warn("Orientation lock rejected:", err));
+        } else {
+          try {
+            screen.orientation.unlock();
+          } catch (e) {
+            // Σιωπηλό fail αν δεν υποστηρίζεται το unlock
+          }
+        }
+      } else if (screen.lockOrientation) {
+        // Fallback για παλιότερους browsers / WebViews
+        if (mode === "landscape") screen.lockOrientation("landscape");
+        else if (mode === "portrait") screen.lockOrientation("portrait");
+        else screen.unlockOrientation();
+      }
+    } catch (error) {
+      console.warn(
+        "Το orientation lock απέτυχε, αλλά το παιχνίδι συνεχίζει κανονικά:",
+        error,
+      );
+    }
+  };
 
   // Επιστροφή στο κεντρικό μενού
   const showMenu = () => {
@@ -24,37 +57,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gameCanvas.style.display = "none";
     if (touchControls) touchControls.style.display = "none";
-
-    btnBack.style.display = "none"; // Κρύβε το κουμπί στο μενού
+    btnBack.style.display = "none";
     menuDiv.style.display = "flex";
+
+    // Ξεκλείδωμα οθόνης κατά την επιστροφή στο μενού
+    changeOrientation("unlock");
   };
 
-  // Όταν ο χρήστης πατάει το κουμπί "← Μενού"
+  // Σύνδεση του κουμπιού επιστροφής
   btnBack.addEventListener("click", showMenu);
 
-  // Επιλογή 1: Dark Platformer
+  // Επιλογή 1: Το Dark Platformer με τους γρίφους (LANDSCAPE)
   btnPlatformer.addEventListener("click", () => {
     menuDiv.style.display = "none";
     gameCanvas.style.display = "block";
-    if (touchControls) touchControls.style.display = "block";
+    if (touchControls) touchControls.style.display = "block"; // Ενεργοποίηση joystick
+    btnBack.style.display = "block"; // Εμφάνιση κουμπιού "Μενού"
 
-    btnBack.style.display = "block"; // Εμφάνισε το κουμπί!
+    // Κλείδωμα σε Landscape προσανατολισμό
+    changeOrientation("landscape");
 
+    // Επαναφορά διαστάσεων του Platformer
     gameCanvas.width = 800;
     gameCanvas.height = 450;
+
     activeGame = new Game(canvasManager, showMenu);
   });
 
-  // Επιλογή 2: Doodle Jump
+  // Επιλογή 2: Το Doodle Jump Clone (PORTRAIT)
   btnDoodle.addEventListener("click", () => {
     menuDiv.style.display = "none";
     gameCanvas.style.display = "block";
-    if (touchControls) touchControls.style.display = "none";
+    if (touchControls) touchControls.style.display = "none"; // Απενεργοποίηση joystick
+    btnBack.style.display = "block"; // Εμφάνιση κουμπιού "Μενού"
 
-    btnBack.style.display = "block"; // Εμφάνισε το κουμπί!
+    // Κλείδωμα σε Portrait προσανατολισμό
+    changeOrientation("portrait");
 
+    // Ρύθμιση ψηλού και λεπτού canvas για το Doodle Jump
     gameCanvas.width = 380;
     gameCanvas.height = 680;
+
     activeGame = new DoodleGame(canvasManager, showMenu);
   });
 });

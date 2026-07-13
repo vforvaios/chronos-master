@@ -246,4 +246,25 @@ export class Game {
     // LAYER 4: UI / Παζλ
     this.puzzle.draw();
   }
+
+  destroy() {
+    // 1. Σταματάμε το update loop του παιχνιδιού
+    this.isPaused = true;
+
+    // 2. Σταματάμε τη μουσική υπόκρουσης (Background Music)
+    if (this.bgAudio) {
+      this.bgAudio.pause();
+      this.bgAudio.currentTime = 0; // Επαναφορά στην αρχή
+      this.bgAudio = null;
+    }
+
+    // 3. Σταματάμε τον ήχο της λάβας
+    if (this.lavaAudio) {
+      this.lavaAudio.pause();
+      this.lavaAudio.currentTime = 0;
+      this.lavaAudio = null;
+    }
+
+    console.log("Το Dark Platformer καταστράφηκε και οι ήχοι σταμάτησαν!");
+  }
 }

@@ -40,26 +40,78 @@ export class DoodleGame {
     for (let i = 0; i < 7; i++) {
       this.platforms.push({
         x: Math.random() * (this.canvas.width - this.platformWidth),
-        y: this.canvas.height - i * 90 - 150,
+        y: this.canvas.height - i * 85 - 150, // Μειωμένο ελαφρώς για πιο στενά canvas
       });
     }
   }
 
   initEvents() {
+    // --- KEYBOARD CONTROLS (Για PC) ---
     this._keydown = (e) => {
       this.keys[e.code] = true;
-      if (this.gameOver && e.code === "Space") this.resetGame();
-      if (e.code === "Escape") this.destroy(this.onBackToMenu); // Esc για έξοδο στο μενού
+      if (this.gameOver && e.code === "Space") {
+        this.resetGame();
+      }
     };
+
     this._keyup = (e) => {
       this.keys[e.code] = false;
     };
 
     window.addEventListener("keydown", this._keydown);
     window.addEventListener("keyup", this._keyup);
+
+    // --- SMOOTH TOUCH CONTROLS (Για Mobile PWA) ---
+    this.touchStartX = 0;
+
+    this._touchstart = (e) => {
+      // Αν έχει γίνει Game Over, ένα απλό άγγιγμα οπουδήποτε στην οθόνη κάνει Restart!
+      if (this.gameOver) {
+        this.resetGame();
+        return;
+      }
+      this.touchStartX = e.touches[0].clientX;
+    };
+
+    this._touchmove = (e) => {
+      if (this.gameOver) return;
+
+      const touchCurrentX = e.touches[0].clientX;
+      const diffX = touchCurrentX - this.touchStartX;
+
+      // Υπολογισμός αναλογικής ταχύτητας βάσει της απόστασης του swipe
+      let targetVelocity = diffX / 12;
+
+      // Περιορισμός (Clamp) στα όρια της μέγιστης ταχύτητας του παίκτη
+      if (targetVelocity > this.player.speed)
+        targetVelocity = this.player.speed;
+      if (targetVelocity < -this.player.speed)
+        targetVelocity = -this.player.speed;
+
+      // Linear Interpolation (Lerp) για εξαιρετικά ομαλή επιτάχυνση/επιβράδυνση
+      this.player.vx += (targetVelocity - this.player.vx) * 0.3;
+    };
+
+    this._touchend = () => {
+      // Αφήνουμε την τριβή στην update() να σταματήσει το vx γλυκά
+    };
+
+    // Σύνδεση των events απευθείας στο canvas
+    this.canvas.addEventListener("touchstart", this._touchstart, {
+      passive: true,
+    });
+    this.canvas.addEventListener("touchmove", this._touchmove, {
+      passive: true,
+    });
+    this.canvas.addEventListener("touchend", this._touchend, { passive: true });
   }
 
   resetGame() {
+    // Ακύρωση τυχόν παλιού loop για απόλυτη ασφάλεια
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+
     this.player.x = this.canvas.width / 2 - 20;
     this.player.y = this.canvas.height - 150;
     this.player.vx = 0;
@@ -73,19 +125,29 @@ export class DoodleGame {
   update() {
     if (this.gameOver) return;
 
-    if (this.keys["ArrowLeft"]) this.player.vx = -this.player.speed;
-    else if (this.keys["ArrowRight"]) this.player.vx = this.player.speed;
-    else this.player.vx = 0;
+    // --- ΟΡΙΖΟΝΤΙΑ ΚΙΝΗΣΗ (Keyboard & Touch με Smooth Physics) ---
+    if (this.keys["ArrowLeft"]) {
+      this.player.vx = -this.player.speed;
+    } else if (this.keys["ArrowRight"]) {
+      this.player.vx = this.player.speed;
+    } else {
+      // Εφαρμογή τριβής/αδράνειας όταν δεν υπάρχει ενεργή εντολή κίνησης
+      this.player.vx *= 0.82;
+      if (Math.abs(this.player.vx) < 0.1) this.player.vx = 0;
+    }
 
     this.player.x += this.player.vx;
 
+    // Οθόνη Wrap-around (Εμφάνιση από την άλλη πλευρά)
     if (this.player.x + this.player.width < 0)
       this.player.x = this.canvas.width;
     if (this.player.x > this.canvas.width) this.player.x = -this.player.width;
 
+    // Κάθετη κίνηση και βαρύτητα
     this.player.vy += this.gravity;
     this.player.y += this.player.vy;
 
+    // Έλεγχος σύγκρουσης με πλατφόρμες (μόνο κατά την πτώση)
     if (this.player.vy > 0) {
       this.platforms.forEach((platform) => {
         if (
@@ -100,6 +162,7 @@ export class DoodleGame {
       });
     }
 
+    // Κίνηση κάμερας προς τα πάνω
     if (this.player.y < this.canvas.height / 2) {
       let diff = this.canvas.height / 2 - this.player.y;
       this.player.y = this.canvas.height / 2;
@@ -110,6 +173,7 @@ export class DoodleGame {
       });
     }
 
+    // Αναγέννηση πλατφορμών που βγήκαν κάτω από την οθόνη
     this.platforms.forEach((platform) => {
       if (platform.y > this.canvas.height) {
         platform.y = 0 - this.platformHeight;
@@ -117,6 +181,7 @@ export class DoodleGame {
       }
     });
 
+    // Έλεγχος Game Over
     if (this.player.y > this.canvas.height) {
       this.gameOver = true;
     }
@@ -125,10 +190,11 @@ export class DoodleGame {
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Φόντο Doodle Jump
+    // Φόντο
     this.ctx.fillStyle = "#eef2f3";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+    // Σχεδίαση Πλατφορμών
     this.ctx.fillStyle = "#2ecc71";
     this.platforms.forEach((platform) => {
       this.ctx.fillRect(
@@ -139,6 +205,7 @@ export class DoodleGame {
       );
     });
 
+    // Σχεδίαση Παίκτη
     this.ctx.fillStyle = "#e67e22";
     this.ctx.fillRect(
       this.player.x,
@@ -147,10 +214,12 @@ export class DoodleGame {
       this.player.height,
     );
 
+    // Σχεδίαση Σκορ
     this.ctx.fillStyle = "#333";
     this.ctx.font = "20px Arial";
     this.ctx.fillText("Score: " + this.score, 20, 35);
 
+    // Οθόνη Game Over
     if (this.gameOver) {
       this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -170,7 +239,7 @@ export class DoodleGame {
         this.canvas.height / 2 + 20,
       );
       this.ctx.fillText(
-        "SPACE για Replay | ESC για Μενού",
+        "TAP στην οθόνη για Replay",
         this.canvas.width / 2,
         this.canvas.height / 2 + 60,
       );
@@ -179,18 +248,32 @@ export class DoodleGame {
   }
 
   animate() {
+    if (this.gameOver) {
+      this.draw(); // Σχεδίαση της οθόνης Game Over μία φορά
+      return; // Διακοπή του animation loop
+    }
+
     this.update();
     this.draw();
-    if (!this.gameOver) {
-      this.animationFrameId = requestAnimationFrame(() => this.animate());
-    }
+
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
   }
 
-  // Καθαρισμός όταν βγαίνουμε από το παιχνίδι
-  destroy(callback) {
-    cancelAnimationFrame(this.animationFrameId);
+  // Καθαρισμός κατά την έξοδο στο μενού
+  destroy() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+
+    // Αφαίρεση keyboard listeners
     window.removeEventListener("keydown", this._keydown);
     window.removeEventListener("keyup", this._keyup);
-    if (callback) callback();
+
+    // Αφαίρεση touch listeners
+    this.canvas.removeEventListener("touchstart", this._touchstart);
+    this.canvas.removeEventListener("touchmove", this._touchmove);
+    this.canvas.removeEventListener("touchend", this._touchend);
+
+    console.log("Το Doodle Jump σταμάτησε και τα touch controls καθαρίστηκαν.");
   }
 }
