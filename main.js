@@ -10,40 +10,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const touchControls = document.getElementById("touch-controls");
   const btnBack = document.getElementById("btn-back-to-menu");
 
+  if (!gameCanvas) {
+    console.error("Το Canvas με id='game' δεν βρέθηκε!");
+    return;
+  }
+
   const canvasManager = new CanvasManager(gameCanvas);
   let activeGame = null;
 
-  // Ασφαλής συνάρτηση για αλλαγή προσανατολισμού (Συμβατή και με Android 9)
+  // Με το που ανοίγει η εφαρμογή, χρειαζόμαστε Portrait προσανατολισμό
+  document.body.classList.add("needs-portrait");
+
+  // Ασφαλής αλλαγή προσανατολισμού χωρίς await (για αποφυγή NotSupportedError)
   const changeOrientation = (mode) => {
     try {
       if (screen.orientation && typeof screen.orientation.lock === "function") {
         if (mode === "landscape") {
-          screen.orientation
-            .lock("landscape")
-            .then(() => console.log("Orientation locked to landscape"))
-            .catch((err) => console.warn("Orientation lock rejected:", err));
+          screen.orientation.lock("landscape").catch((err) => {
+            console.warn("Το κλείδωμα σε landscape απορρίφθηκε:", err.message);
+          });
         } else if (mode === "portrait") {
-          screen.orientation
-            .lock("portrait")
-            .then(() => console.log("Orientation locked to portrait"))
-            .catch((err) => console.warn("Orientation lock rejected:", err));
+          screen.orientation.lock("portrait").catch((err) => {
+            console.warn("Το κλείδωμα σε portrait απορρίφθηκε:", err.message);
+          });
         } else {
           try {
             screen.orientation.unlock();
-          } catch (e) {
-            // Σιωπηλό fail αν δεν υποστηρίζεται το unlock
-          }
+          } catch (e) {}
         }
-      } else if (screen.lockOrientation) {
-        // Fallback για παλιότερους browsers / WebViews
-        if (mode === "landscape") screen.lockOrientation("landscape");
-        else if (mode === "portrait") screen.lockOrientation("portrait");
-        else screen.unlockOrientation();
       }
     } catch (error) {
       console.warn(
-        "Το orientation lock απέτυχε, αλλά το παιχνίδι συνεχίζει κανονικά:",
-        error,
+        "Η αλλαγή προσανατολισμού δεν υποστηρίζεται σε αυτή τη συσκευή.",
       );
     }
   };
@@ -55,49 +53,70 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     activeGame = null;
 
+    // === RESET ΤΟΥ SCROLL ΤΗΣ ΣΕΛΙΔΑΣ ===
+    // Αυτό διορθώνει το γλίστρημα του μενού προς τα πάνω!
+    window.scrollTo(0, 0);
+    if (document.body) document.body.scrollTop = 0;
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+
+    // Αφαιρούμε το Landscape φίλτρο και ενεργοποιούμε το Portrait φίλτρο για το μενού
+    document.body.classList.remove("playing-platformer");
+    document.body.classList.add("needs-portrait");
+
     gameCanvas.style.display = "none";
     if (touchControls) touchControls.style.display = "none";
-    btnBack.style.display = "none";
-    menuDiv.style.display = "flex";
+    if (btnBack) btnBack.style.display = "none";
+    if (menuDiv) menuDiv.style.display = "flex";
 
-    // Ξεκλείδωμα οθόνης κατά την επιστροφή στο μενού
-    changeOrientation("unlock");
+    // Προσπάθεια για αυτόματο γύρισμα σε portrait
+    changeOrientation("portrait");
   };
 
-  // Σύνδεση του κουμπιού επιστροφής
-  btnBack.addEventListener("click", showMenu);
+  if (btnBack) {
+    btnBack.addEventListener("click", showMenu);
+  }
 
-  // Επιλογή 1: Το Dark Platformer με τους γρίφους (LANDSCAPE)
-  btnPlatformer.addEventListener("click", () => {
-    menuDiv.style.display = "none";
-    gameCanvas.style.display = "block";
-    if (touchControls) touchControls.style.display = "block"; // Ενεργοποίηση joystick
-    btnBack.style.display = "block"; // Εμφάνιση κουμπιού "Μενού"
+  // Επιλογή 1: Dark Platformer (Χρειάζεται LANDSCAPE)
+  if (btnPlatformer) {
+    btnPlatformer.addEventListener("click", () => {
+      if (menuDiv) menuDiv.style.display = "none";
+      gameCanvas.style.display = "block";
+      if (touchControls) touchControls.style.display = "block";
+      if (btnBack) btnBack.style.display = "block";
 
-    // Κλείδωμα σε Landscape προσανατολισμό
-    changeOrientation("landscape");
+      // Αλλάζουμε τις κλάσεις: Τώρα θέλουμε Landscape!
+      document.body.classList.remove("needs-portrait");
+      document.body.classList.add("playing-platformer");
 
-    // Επαναφορά διαστάσεων του Platformer
-    gameCanvas.width = 800;
-    gameCanvas.height = 450;
+      // Προσπάθεια για αυτόματη αλλαγή
+      changeOrientation("landscape");
 
-    activeGame = new Game(canvasManager, showMenu);
-  });
+      gameCanvas.width = 800;
+      gameCanvas.height = 450;
 
-  // Επιλογή 2: Το Doodle Jump Clone (PORTRAIT)
-  btnDoodle.addEventListener("click", () => {
-    menuDiv.style.display = "none";
-    gameCanvas.style.display = "block";
-    if (touchControls) touchControls.style.display = "none"; // Απενεργοποίηση joystick
-    btnBack.style.display = "block"; // Εμφάνιση κουμπιού "Μενού"
+      activeGame = new Game(canvasManager, showMenu);
+    });
+  }
 
-    // Κλείδωμα σε Portrait προσανατολισμό
-    changeOrientation("portrait");
+  // Επιλογή 2: Doodle Jump (Χρειάζεται PORTRAIT)
+  if (btnDoodle) {
+    btnDoodle.addEventListener("click", () => {
+      if (menuDiv) menuDiv.style.display = "none";
+      gameCanvas.style.display = "block";
+      if (touchControls) touchControls.style.display = "none";
+      if (btnBack) btnBack.style.display = "block";
 
-    // Ρύθμιση ψηλού και λεπτού canvas για το Doodle Jump
-    gameCanvas.width = 380;
-    gameCanvas.height = 680;
+      // Θέλουμε Portrait και για το Doodle Jump
+      document.body.classList.remove("playing-platformer");
+      document.body.classList.add("needs-portrait");
 
-    activeGame = new DoodleGame(canvasManager, showMenu);
-  });
+      // Προσπάθεια για αυτόματη αλλαγή
+      changeOrientation("portrait");
+
+      gameCanvas.width = 380;
+      gameCanvas.height = 680;
+
+      activeGame = new DoodleGame(canvasManager, showMenu);
+    });
+  }
 });

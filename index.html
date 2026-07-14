@@ -10,6 +10,86 @@
     />
 
     <style>
+      /* Κοινό στυλ και για τα δύο overlays */
+      #rotate-to-landscape-overlay,
+      #rotate-to-portrait-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(20, 24, 30, 0.98);
+        color: white;
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-family: sans-serif;
+        padding: 20px;
+      }
+
+      .rotate-message {
+        max-width: 300px;
+      }
+
+      .phone-icon-landscape,
+      .phone-icon-portrait {
+        font-size: 50px;
+        margin-bottom: 20px;
+      }
+
+      /* Animations για τα εικονίδια */
+      .phone-icon-landscape {
+        animation: toLandscape 2s infinite ease-in-out;
+      }
+      .phone-icon-portrait {
+        animation: toPortrait 2s infinite ease-in-out;
+      }
+
+      @keyframes toLandscape {
+        0% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(90deg);
+        }
+        100% {
+          transform: rotate(0deg);
+        }
+      }
+      @keyframes toPortrait {
+        0% {
+          transform: rotate(90deg);
+        }
+        50% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(90deg);
+        }
+      }
+
+      /* --- ΕΛΕΓΧΟΣ ΠΡΟΣΑΝΑΤΟΛΙΣΜΟΥ --- */
+
+      /* 1. Αν χρειαζόμαστε Landscape αλλά το κινητό είναι όρθιο (Portrait) */
+      body.playing-platformer {
+        @media (orientation: portrait) and (pointer: coarse) {
+          #rotate-to-landscape-overlay {
+            display: flex;
+          }
+        }
+      }
+
+      /* 2. Αν χρειαζόμαστε Portrait (Μενού/Doodle) αλλά το κινητό είναι πλάγια (Landscape) */
+      body.needs-portrait {
+        @media (orientation: landscape) and (pointer: coarse) {
+          #rotate-to-portrait-overlay {
+            display: flex;
+          }
+        }
+      }
+
       html,
       body {
         margin: 0;
@@ -116,10 +196,10 @@
       #btn-back-to-menu {
         position: absolute;
         top: 15px;
-        left: 15px;
+        right: 15px;
         z-index: 200; /* Για να είναι πάνω από το σκοτάδι και το canvas */
-        padding: 10px 18px;
-        font-size: 16px;
+        padding: 4px 8px;
+        font-size: 12px;
         font-weight: bold;
         background-color: #e74c3c; /* Κόκκινο */
         color: white;
@@ -135,6 +215,21 @@
   </head>
 
   <body>
+    <div id="rotate-to-landscape-overlay">
+      <div class="rotate-message">
+        <div class="phone-icon-landscape">📱🔄</div>
+        <p>
+          Παρακαλώ γυρίστε τη συσκευή σας οριζόντια (Landscape) για να παίξετε!
+        </p>
+      </div>
+    </div>
+
+    <div id="rotate-to-portrait-overlay">
+      <div class="rotate-message">
+        <div class="phone-icon-portrait">📱🔄</div>
+        <p>Παρακαλώ κρατήστε τη συσκευή σας κάθετα (Portrait) για το μενού!</p>
+      </div>
+    </div>
     <div id="main-menu">
       <h1>ΕΠΙΛΕΞΤΕ ΠΑΙΧΝΙΔΙ</h1>
       <button id="btn-platformer">Dark Platformer</button>
