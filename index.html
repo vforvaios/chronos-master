@@ -10,86 +10,6 @@
     />
 
     <style>
-      /* Κοινό στυλ και για τα δύο overlays */
-      #rotate-to-landscape-overlay,
-      #rotate-to-portrait-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(20, 24, 30, 0.98);
-        color: white;
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        font-family: sans-serif;
-        padding: 20px;
-      }
-
-      .rotate-message {
-        max-width: 300px;
-      }
-
-      .phone-icon-landscape,
-      .phone-icon-portrait {
-        font-size: 50px;
-        margin-bottom: 20px;
-      }
-
-      /* Animations για τα εικονίδια */
-      .phone-icon-landscape {
-        animation: toLandscape 2s infinite ease-in-out;
-      }
-      .phone-icon-portrait {
-        animation: toPortrait 2s infinite ease-in-out;
-      }
-
-      @keyframes toLandscape {
-        0% {
-          transform: rotate(0deg);
-        }
-        50% {
-          transform: rotate(90deg);
-        }
-        100% {
-          transform: rotate(0deg);
-        }
-      }
-      @keyframes toPortrait {
-        0% {
-          transform: rotate(90deg);
-        }
-        50% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(90deg);
-        }
-      }
-
-      /* --- ΕΛΕΓΧΟΣ ΠΡΟΣΑΝΑΤΟΛΙΣΜΟΥ --- */
-
-      /* 1. Αν χρειαζόμαστε Landscape αλλά το κινητό είναι όρθιο (Portrait) */
-      body.playing-platformer {
-        @media (orientation: portrait) and (pointer: coarse) {
-          #rotate-to-landscape-overlay {
-            display: flex;
-          }
-        }
-      }
-
-      /* 2. Αν χρειαζόμαστε Portrait (Μενού/Doodle) αλλά το κινητό είναι πλάγια (Landscape) */
-      body.needs-portrait {
-        @media (orientation: landscape) and (pointer: coarse) {
-          #rotate-to-portrait-overlay {
-            display: flex;
-          }
-        }
-      }
-
       html,
       body {
         margin: 0;
@@ -163,81 +83,11 @@
       .jump-button:active {
         background: rgba(255, 255, 255, 0.4);
       }
-
-      #main-menu {
-        position: absolute;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-        z-index: 100;
-        background: rgba(20, 20, 20, 0.95);
-        padding: 40px;
-        border-radius: 12px;
-        border: 2px solid #333;
-        color: white;
-        font-family: sans-serif;
-      }
-      #main-menu button {
-        padding: 15px 30px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        background: #e67e22;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        transition: 0.2s;
-      }
-      #main-menu button:hover {
-        background: #d35400;
-      }
-
-      #btn-back-to-menu {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 200; /* Για να είναι πάνω από το σκοτάδι και το canvas */
-        padding: 4px 8px;
-        font-size: 12px;
-        font-weight: bold;
-        background-color: #e74c3c; /* Κόκκινο */
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      }
-      #btn-back-to-menu:active {
-        transform: scale(0.95);
-      }
     </style>
   </head>
 
   <body>
-    <div id="rotate-to-landscape-overlay">
-      <div class="rotate-message">
-        <div class="phone-icon-landscape">📱🔄</div>
-        <p>
-          Παρακαλώ γυρίστε τη συσκευή σας οριζόντια (Landscape) για να παίξετε!
-        </p>
-      </div>
-    </div>
-
-    <div id="rotate-to-portrait-overlay">
-      <div class="rotate-message">
-        <div class="phone-icon-portrait">📱🔄</div>
-        <p>Παρακαλώ κρατήστε τη συσκευή σας κάθετα (Portrait) για το μενού!</p>
-      </div>
-    </div>
-    <div id="main-menu">
-      <h1>ΕΠΙΛΕΞΤΕ ΠΑΙΧΝΙΔΙ</h1>
-      <button id="btn-platformer">Dark Platformer</button>
-      <button id="btn-doodle">Jumping Jumper</button>
-    </div>
-
     <canvas id="game"></canvas>
-    <button id="btn-back-to-menu" style="display: none">← Μενού</button>
 
     <div id="touch-controls">
       <div class="joystick-container" id="joystick">
@@ -245,7 +95,5 @@
       </div>
       <div class="jump-button" id="jump-btn">JUMP</div>
     </div>
-
-    <!-- <script type="module" src="./main.js"></script> -->
   </body>
 </html>
