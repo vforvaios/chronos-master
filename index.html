@@ -30,7 +30,6 @@
         display: block;
       }
 
-      /* TOUCH CONTROLS UI */
       #touch-controls {
         display: none;
         position: absolute;
@@ -40,6 +39,13 @@
         height: 140px;
         pointer-events: none;
         z-index: 10;
+      }
+
+      /* Mobile & Tablet μόνο */
+      @media (hover: none) and (pointer: coarse) {
+        #touch-controls {
+          display: block;
+        }
       }
       .joystick-container {
         position: absolute;
