@@ -27,6 +27,8 @@ export class Game {
     this.lavaFrame = 0;
     this.lavaTimer = 0;
     this.particles = [];
+    this.maxLives = 3;
+    this.lives = this.maxLives;
 
     // 1. Απλά ορίζουμε τη μεταβλητή, ΔΕΝ φορτώνουμε το αρχείο ακόμα
     this.lavaAudio = null;
@@ -114,6 +116,7 @@ export class Game {
 
   nextLevel() {
     this.currentLevelIndex++; // Πάει στο 2, 3, 4... στο άπειρο!
+    this.lives = this.maxLives;
     this.loadLevel(this.currentLevelIndex);
   }
 
@@ -123,6 +126,21 @@ export class Game {
     this.update(dt);
     this.draw();
     requestAnimationFrame((e) => this.loop(e));
+  }
+
+  loseLife() {
+    this.lives--;
+
+    if (this.lives <= 0) {
+      // Game Over
+      this.lives = this.maxLives;
+      this.currentLevelIndex = 1;
+      this.loadLevel(this.currentLevelIndex);
+      return;
+    }
+
+    // Respawn στην ίδια πίστα
+    this.player.spawn(2.5, MAP_ROWS - 3.5);
   }
 
   update(dt) {
@@ -170,7 +188,8 @@ export class Game {
             return false;
           } else {
             // Αν τον ακούμπησε από το πλάι ή από κάτω, ο παίκτης χάνει
-            this.loadLevel(this.currentLevelIndex);
+            // this.loadLevel(this.currentLevelIndex);
+            this.loseLife();
           }
         }
         return true; // Ο εχθρός παραμένει ζωντανός
@@ -182,7 +201,8 @@ export class Game {
 
     // Αν βρίσκεται χαμηλά και δεν είναι στη Safe Zone
     if (this.player.y > deathY && this.player.x > 7) {
-      this.loadLevel(this.currentLevelIndex);
+      // this.loadLevel(this.currentLevelIndex);
+      this.loseLife();
     }
 
     const tile = this.canvas.tile;
@@ -243,6 +263,9 @@ export class Game {
 
     ctx.restore();
 
+    ctx.fillStyle = "white";
+    ctx.font = `${tile / 2}px Arial`;
+    ctx.fillText(`❤️ ${this.lives}`, 20, 35);
     // LAYER 4: UI / Παζλ
     this.puzzle.draw();
   }
